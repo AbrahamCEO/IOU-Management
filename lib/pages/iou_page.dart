@@ -13,8 +13,8 @@ class IOUPage extends StatefulWidget {
 class _IOUPageState extends State<IOUPage> {
   final DatabaseService _dbService = DatabaseService.instance;
   List<Map<String, dynamic>> _items = [];
-  double total = 0.0;
-  double remaining = 0.0;
+  double total = 0.00;
+  double remaining = 0.00;
 
   @override
   void initState() {
@@ -24,10 +24,10 @@ class _IOUPageState extends State<IOUPage> {
 
   Future<void> _fetchItems() async {
     final items = await _dbService.getIOU();
-    double newTotal = 0.0;
+    double newTotal = 0.00;
 
     for (var item in items) {
-      newTotal += item['Amount'] ?? 0.0;
+      newTotal += item['Amount'] ?? 0.00;
     }
 
     setState(() {

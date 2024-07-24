@@ -97,9 +97,10 @@ class _DashboardState extends State<DashboardPage> {
         body: TabBarView(
           children: [
             DashboardContent(
-                updateData: _updateData,
-                iouItems: _iouItems,
-                uomeItems: _uomeItems),
+              updateData: _updateData,
+              iouItems: _iouItems,
+              uomeItems: _uomeItems,
+            ),
             UOMePage(updateData: _updateData),
             IOUPage(updateData: _updateData),
           ],
@@ -151,18 +152,33 @@ class DashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double iouTotal = 0.00;
+    double uomeTotal = 0.00;
+
+    for (var item in iouItems) {
+      iouTotal += item['Amount'] ?? 0.00;
+    }
+    for (var item in uomeItems) {
+      uomeTotal += item['Amount'] ?? 0.00;
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Dashboard', style: kHeadlineStyle),
-          SizedBox(height: 24),
+          Text(
+            'Dashboard',
+            style: kHeadlineStyle,
+          ),
+          SizedBox(height: 10),
           NetBalanceCard(iouItems: iouItems, uomeItems: uomeItems),
-          SizedBox(height: 24),
+          SizedBox(height: 10),
           BalanceDistributionChart(iouItems: iouItems, uomeItems: uomeItems),
           SizedBox(height: 24),
-          RecentTransactionsList(iouItems: iouItems, uomeItems: uomeItems),
+          IOUCard(totalAmount: iouTotal),
+          SizedBox(height: 16),
+          UOMeCard(totalAmount: uomeTotal),
         ],
       ),
     );
@@ -202,11 +218,11 @@ class NetBalanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Net Balance', style: kBodyStyle),
-            SizedBox(height: 8),
+            SizedBox(height: 3),
             Text(
               'USD ${netBalance.toStringAsFixed(2)}',
               style: GoogleFonts.poppins(
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: kSecondaryColor,
               ),
@@ -251,7 +267,7 @@ class BalanceDistributionChart extends StatelessWidget {
             Text('Balance Distribution', style: kBodyStyle),
             SizedBox(height: 16),
             SizedBox(
-              height: 200,
+              height: 150,
               child: PieChart(
                 PieChartData(
                   sections: [
@@ -259,14 +275,14 @@ class BalanceDistributionChart extends StatelessWidget {
                       color: kPrimaryColor,
                       value: iouTotal,
                       title: 'IOU',
-                      radius: 50,
-                      titleStyle: TextStyle(color: Colors.white, fontSize: 12),
+                      radius: 40,
+                      titleStyle: TextStyle(color: Colors.white, fontSize: 13),
                     ),
                     PieChartSectionData(
                       color: kSecondaryColor,
                       value: uomeTotal,
                       title: 'UOMe',
-                      radius: 50,
+                      radius: 40,
                       titleStyle: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ],
@@ -282,105 +298,103 @@ class BalanceDistributionChart extends StatelessWidget {
   }
 }
 
-class RecentTransactionsList extends StatelessWidget {
-  final List<Map<String, dynamic>> iouItems;
-  final List<Map<String, dynamic>> uomeItems;
+class IOUCard extends StatelessWidget {
+  final double totalAmount;
 
-  const RecentTransactionsList({
-    required this.iouItems,
-    required this.uomeItems,
+  const IOUCard({
+    required this.totalAmount,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Create a combined list of transactions with type included
-    final transactions = <Map<String, dynamic>>[
-      ...iouItems.map((item) => {
-            ...item, // Copy existing fields
-            'Type': 'IOU',
-          }),
-      ...uomeItems.map((item) => {
-            ...item, // Copy existing fields
-            'Type': 'UOMe',
-          }),
-    ];
-
-    // Sort transactions by date if available
-    transactions.sort((a, b) {
-      DateTime dateA =
-          DateTime.tryParse(a['Start_Date'] ?? '') ?? DateTime.now();
-      DateTime dateB =
-          DateTime.tryParse(b['Start_Date'] ?? '') ?? DateTime.now();
-      return dateB.compareTo(dateA); // Most recent first
-    });
-
-    // Determine height based on the number of transactions
-    double itemHeight = 80; // Approximate height of each ListTile
-    double baseHeight = 50; // Base height for the header
-    double totalHeight = transactions.length * itemHeight + baseHeight;
-
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(10.0),
+        child: Row(
           children: [
-            Text('Recent Transactions',
-                style: kBodyStyle.copyWith(fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
             Container(
-              height: totalHeight, // Set dynamic height here
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: transactions.length,
-                itemBuilder: (context, index) {
-                  final transaction = transactions[index];
-                  final isIOU = transaction['Type'] == 'IOU';
-                  final iconColor = isIOU ? Colors.red : Colors.green;
-                  final text = isIOU ? 'IOU' : 'UOMe';
-                  final amount = transaction['Amount'] ?? 0.00;
-                  final description = transaction['Start_Date'] ?? 'No Date';
-                  final date =
-                      DateTime.tryParse(transaction['Start_Date'] ?? '') ??
-                          DateTime.now();
-                  final name = transaction['Name'] ?? 'Unnamed Transaction';
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: ListTile(
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                      leading: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isIOU ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: iconColor,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            text,
-                            style: TextStyle(
-                              color: iconColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      title: Text(name, style: kBodyStyle),
-                      subtitle: Text(description,
-                          style: kBodyStyle.copyWith(fontSize: 14)),
-                      trailing: Text('\$${amount.toStringAsFixed(2)}',
-                          style:
-                              kBodyStyle.copyWith(fontWeight: FontWeight.bold)),
+              width: 5,
+              height: 50,
+              color: kPrimaryColor, // Orange color for IOU
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'IOU',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: kSecondaryColor,
                     ),
-                  );
-                },
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '\USD ${totalAmount.toStringAsFixed(2)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 17,
+                      color: kSecondaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class UOMeCard extends StatelessWidget {
+  final double totalAmount;
+
+  const UOMeCard({
+    required this.totalAmount,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Row(
+          children: [
+            Container(
+              width: 5,
+              height: 50,
+              color: Colors.black, // Black color for UOMe
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'UOMe',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: kSecondaryColor,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '\USD ${totalAmount.toStringAsFixed(2)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 17,
+                      color: kSecondaryColor,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
