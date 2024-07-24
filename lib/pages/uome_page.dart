@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:iouapp/services/database_service.dart';
 
 class UOMePage extends StatefulWidget {
-  const UOMePage({super.key});
+  final Function updateData;
+
+  const UOMePage({required this.updateData, super.key});
 
   @override
   State<UOMePage> createState() => _UOMePageState();
@@ -41,17 +43,22 @@ class _UOMePageState extends State<UOMePage> {
   void _deleteItem(int id) async {
     await _dbService.deleteUOMe(id);
     _fetchItems();
+    widget.updateData();
   }
 
-  void _openForm() {
+  void _openForm({Map<String, dynamic>? item}) {
     final _formKey = GlobalKey<FormState>();
-    final _nameController = TextEditingController();
-    final _contactNumberController = TextEditingController();
-    final _emailController = TextEditingController();
-    final _descriptionController = TextEditingController();
-    final _amountController = TextEditingController();
-    final _startDateController = TextEditingController();
-    final _notesController = TextEditingController();
+    final _nameController = TextEditingController(text: item?['Name'] ?? '');
+    final _contactNumberController =
+        TextEditingController(text: item?['Contact_Number'] ?? '');
+    final _emailController = TextEditingController(text: item?['Email'] ?? '');
+    final _descriptionController =
+        TextEditingController(text: item?['Description'] ?? '');
+    final _amountController =
+        TextEditingController(text: item?['Amount']?.toString() ?? '');
+    final _startDateController =
+        TextEditingController(text: item?['Start_Date'] ?? '');
+    final _notesController = TextEditingController(text: item?['Notes'] ?? '');
 
     showDialog(
       context: context,
@@ -116,29 +123,51 @@ class _UOMePageState extends State<UOMePage> {
                   ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        _dbService.addUOMe({
-                          'Name': _nameController.text,
-                          'Contact_Number': _contactNumberController.text,
-                          'Email': _emailController.text,
-                          'Description': _descriptionController.text,
-                          'Amount': double.parse(_amountController.text),
-                          'Start_Date': _startDateController.text,
-                          'End_Date': null, // You can handle end date if needed
-                          'Notes': _notesController.text,
-                          'Paid': 0, // Assuming 0 means not paid
-                        }).then((_) {
-                          Navigator.of(context).pop();
-                          _fetchItems();
-                        }).catchError((e) {
-                          // Handle error
-                          print("Error adding UOMe: $e");
-                        });
+                        if (item == null) {
+                          _dbService.addUOMe({
+                            'Name': _nameController.text,
+                            'Contact_Number': _contactNumberController.text,
+                            'Email': _emailController.text,
+                            'Description': _descriptionController.text,
+                            'Amount': double.parse(_amountController.text),
+                            'Start_Date': _startDateController.text,
+                            'End_Date': null,
+                            'Notes': _notesController.text,
+                            'Paid': 0,
+                            'Type': 'UOMe'
+                          }).then((_) {
+                            Navigator.of(context).pop();
+                            _fetchItems();
+                            widget.updateData();
+                          }).catchError((e) {
+                            print("Error adding UOMe: $e");
+                          });
+                        } else {
+                          _dbService.updateUOMe(item['id'], {
+                            'Name': _nameController.text,
+                            'Contact_Number': _contactNumberController.text,
+                            'Email': _emailController.text,
+                            'Description': _descriptionController.text,
+                            'Amount': double.parse(_amountController.text),
+                            'Start_Date': _startDateController.text,
+                            'End_Date': item['End_Date'],
+                            'Notes': _notesController.text,
+                            'Paid': item['Paid'],
+                            'Type': 'UOMe' // Set the Type field
+                          }).then((_) {
+                            Navigator.of(context).pop();
+                            _fetchItems();
+                            widget.updateData();
+                          }).catchError((e) {
+                            print("Error updating UOMe: $e");
+                          });
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                     ),
-                    child: Text('Save'),
+                    child: Text(item == null ? 'Save' : 'Update'),
                   ),
                 ],
               ),
@@ -204,8 +233,9 @@ class _UOMePageState extends State<UOMePage> {
                 itemBuilder: (context, index) {
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    elevation: 6, // Add elevation for shadow
+                    elevation: 6,
                     child: ListTile(
+                      onTap: () => _openForm(item: _items[index]),
                       title: Text(
                         _items[index]['Name']!,
                         style: TextStyle(
@@ -238,7 +268,7 @@ class _UOMePageState extends State<UOMePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _openForm,
+        onPressed: () => _openForm(),
         backgroundColor: Colors.orange,
         child: Icon(Icons.add, color: Colors.white),
       ),

@@ -21,6 +21,7 @@ class DatabaseService {
   final String _uomeEndDateColumnName = "End_Date";
   final String _uomeNotesColumnName = "Notes";
   final String _uomePaidColumnName = "Paid";
+  final String _uomeType = "Type"; // Column name for type
 
   // IOU Column Names
   final String _iouIdColumnName = "id";
@@ -33,6 +34,7 @@ class DatabaseService {
   final String _iouEndDateColumnName = "End_Date";
   final String _iouNotesColumnName = "Notes";
   final String _iouPaidColumnName = "Paid";
+  final String _iouType = "Type"; // Column name for type
 
   DatabaseService._constructor();
 
@@ -60,7 +62,8 @@ class DatabaseService {
           $_uomeStartDateColumnName TEXT NOT NULL,
           $_uomeEndDateColumnName TEXT,
           $_uomeNotesColumnName TEXT,
-          $_uomePaidColumnName INTEGER
+          $_uomePaidColumnName INTEGER,
+          $_uomeType TEXT DEFAULT 'UOMe'
         )
         ''');
         db.execute('''
@@ -74,7 +77,8 @@ class DatabaseService {
           $_iouStartDateColumnName TEXT NOT NULL,
           $_iouEndDateColumnName TEXT,
           $_iouNotesColumnName TEXT,
-          $_iouPaidColumnName INTEGER
+          $_iouPaidColumnName INTEGER,
+          $_iouType TEXT DEFAULT 'IOU'
         )
         ''');
       },
@@ -84,6 +88,8 @@ class DatabaseService {
 
   Future<void> addUOMe(Map<String, dynamic> uomeData) async {
     final db = await database;
+    // Ensure Type is set to 'UOMe'
+    uomeData[_uomeType] = 'UOMe';
     try {
       await db.insert(_uomeTableName, uomeData);
     } catch (e) {
@@ -128,6 +134,8 @@ class DatabaseService {
 
   Future<void> addIOU(Map<String, dynamic> iouData) async {
     final db = await database;
+    // Ensure Type is set to 'IOU'
+    iouData[_iouType] = 'IOU';
     try {
       await db.insert(_iouTableName, iouData);
     } catch (e) {
