@@ -20,7 +20,7 @@ class DatabaseService {
   final String _uomeStartDateColumnName = "Start_Date";
   final String _uomeEndDateColumnName = "End_Date";
   final String _uomeNotesColumnName = "Notes";
-  final String _uomePaidColumnName = "Paid";
+  final String _uomeStatusColumnName = "Status";
   final String _uomeType = "Type"; // Column name for type
 
   // IOU Column Names
@@ -33,7 +33,7 @@ class DatabaseService {
   final String _iouStartDateColumnName = "Start_Date";
   final String _iouEndDateColumnName = "End_Date";
   final String _iouNotesColumnName = "Notes";
-  final String _iouPaidColumnName = "Paid";
+  final String _iouStatusColumnName = "Status";
   final String _iouType = "Type"; // Column name for type
 
   DatabaseService._constructor();
@@ -62,7 +62,7 @@ class DatabaseService {
           $_uomeStartDateColumnName TEXT NOT NULL,
           $_uomeEndDateColumnName TEXT,
           $_uomeNotesColumnName TEXT,
-          $_uomePaidColumnName INTEGER,
+          $_uomeStatusColumnName TEXT,
           $_uomeType TEXT DEFAULT 'UOMe'
         )
         ''');
@@ -77,7 +77,7 @@ class DatabaseService {
           $_iouStartDateColumnName TEXT NOT NULL,
           $_iouEndDateColumnName TEXT,
           $_iouNotesColumnName TEXT,
-          $_iouPaidColumnName INTEGER,
+          $_iouStatusColumnName TEXT,
           $_iouType TEXT DEFAULT 'IOU'
         )
         ''');

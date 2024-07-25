@@ -13,8 +13,8 @@ class IOUPage extends StatefulWidget {
 class _IOUPageState extends State<IOUPage> {
   final DatabaseService _dbService = DatabaseService.instance;
   List<Map<String, dynamic>> _items = [];
-  double total = 0.00;
-  double remaining = 0.00;
+  double total = 0.0;
+  double remaining = 0.0;
 
   @override
   void initState() {
@@ -24,19 +24,17 @@ class _IOUPageState extends State<IOUPage> {
 
   Future<void> _fetchItems() async {
     final items = await _dbService.getIOU();
-    double newTotal = 0.00;
+    double newTotal = 0.0;
 
     for (var item in items) {
-      newTotal += item['Amount'] ?? 0.00;
+      newTotal += item['Amount'] ?? 0.0;
     }
 
     setState(() {
       _items = items;
+      remaining = newTotal -
+          items.fold(0.0, (prev, item) => prev + (item['Amount'] ?? 0.0));
       total = newTotal;
-      remaining = total -
-          (items
-              .where((item) => item['Paid'] == 1)
-              .fold(0.0, (prev, item) => prev + item['Amount']));
     });
   }
 
@@ -59,116 +57,162 @@ class _IOUPageState extends State<IOUPage> {
     final _startDateController =
         TextEditingController(text: item?['Start_Date'] ?? '');
     final _notesController = TextEditingController(text: item?['Notes'] ?? '');
+    String _status = item?['Status'] ?? 'Started';
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           content: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: InputDecoration(labelText: 'Name*'),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Name is required' : null,
+            child: Stack(
+              children: [
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(labelText: 'Name*'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Name is required' : null,
+                      ),
+                      TextFormField(
+                        controller: _contactNumberController,
+                        decoration:
+                            InputDecoration(labelText: 'Contact Number'),
+                      ),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: InputDecoration(labelText: 'Email'),
+                      ),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: InputDecoration(labelText: 'Description*'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Description is required' : null,
+                      ),
+                      TextFormField(
+                        controller: _amountController,
+                        decoration: InputDecoration(labelText: 'Amount*'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Amount is required' : null,
+                      ),
+                      TextFormField(
+                        controller: _startDateController,
+                        decoration: InputDecoration(labelText: 'Start Date*'),
+                        readOnly: true,
+                        onTap: () async {
+                          DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2101),
+                          );
+                          if (pickedDate != null) {
+                            _startDateController.text =
+                                pickedDate.toLocal().toString().split(' ')[0];
+                          }
+                        },
+                        validator: (value) =>
+                            value!.isEmpty ? 'Start Date is required' : null,
+                      ),
+                      TextFormField(
+                        controller: _notesController,
+                        decoration: InputDecoration(labelText: 'Notes'),
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            final newItem = {
+                              'Name': _nameController.text,
+                              'Contact_Number': _contactNumberController.text,
+                              'Email': _emailController.text,
+                              'Description': _descriptionController.text,
+                              'Amount': double.parse(_amountController.text),
+                              'Start_Date': _startDateController.text,
+                              'End_Date': item?['End_Date'] ?? null,
+                              'Notes': _notesController.text,
+                              'Status': _status,
+                              'Type': 'IOU',
+                            };
+
+                            if (item == null) {
+                              _dbService.addIOU(newItem).then((_) {
+                                Navigator.of(context).pop();
+                                _fetchItems();
+                                widget.updateData();
+                              }).catchError((e) {
+                                print("Error adding IOU: $e");
+                              });
+                            } else {
+                              _dbService
+                                  .updateIOU(item['id'], newItem)
+                                  .then((_) {
+                                Navigator.of(context).pop();
+                                _fetchItems();
+                                widget.updateData();
+                              }).catchError((e) {
+                                print("Error updating IOU: $e");
+                              });
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                        ),
+                        child: Text(item == null ? 'Save' : 'Update'),
+                      ),
+                    ],
                   ),
-                  TextFormField(
-                    controller: _contactNumberController,
-                    decoration: InputDecoration(labelText: 'Contact Number'),
-                  ),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
-                  ),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(labelText: 'Description*'),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Description is required' : null,
-                  ),
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: InputDecoration(labelText: 'Amount*'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        value!.isEmpty ? 'Amount is required' : null,
-                  ),
-                  TextFormField(
-                    controller: _startDateController,
-                    decoration: InputDecoration(labelText: 'Start Date*'),
-                    readOnly: true,
-                    onTap: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                      );
-                      if (pickedDate != null) {
-                        _startDateController.text =
-                            pickedDate.toLocal().toString().split(' ')[0];
-                      }
-                    },
-                    validator: (value) =>
-                        value!.isEmpty ? 'Start Date is required' : null,
-                  ),
-                  TextFormField(
-                    controller: _notesController,
-                    decoration: InputDecoration(labelText: 'Notes'),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        if (item == null) {
-                          _dbService.addIOU({
-                            'Name': _nameController.text,
-                            'Contact_Number': _contactNumberController.text,
-                            'Email': _emailController.text,
-                            'Description': _descriptionController.text,
-                            'Amount': double.parse(_amountController.text),
-                            'Start_Date': _startDateController.text,
-                            'End_Date': null,
-                            'Notes': _notesController.text,
-                            'Paid': 0,
-                          }).then((_) {
-                            Navigator.of(context).pop();
-                            _fetchItems();
-                            widget.updateData();
-                          }).catchError((e) {
-                            print("Error adding IOU: $e");
-                          });
-                        } else {
-                          _dbService.updateIOU(item['id'], {
-                            'Name': _nameController.text,
-                            'Contact_Number': _contactNumberController.text,
-                            'Email': _emailController.text,
-                            'Description': _descriptionController.text,
-                            'Amount': double.parse(_amountController.text),
-                            'Start_Date': _startDateController.text,
-                            'End_Date': item['End_Date'],
-                            'Notes': _notesController.text,
-                            'Paid': item['Paid'],
-                          }).then((_) {
-                            Navigator.of(context).pop();
-                            _fetchItems();
-                            widget.updateData();
-                          }).catchError((e) {
-                            print("Error updating IOU: $e");
-                          });
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: CircleAvatar(
+                    backgroundColor: getStatusColor(_status),
+                    child: PopupMenuButton<String>(
+                      onSelected: (value) {
+                        setState(() {
+                          _status = value;
+                        });
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'Started',
+                          child: Text('Started'),
+                        ),
+                        PopupMenuItem(
+                          value: 'Pending',
+                          child: Text('Pending'),
+                        ),
+                        PopupMenuItem(
+                          value: 'Paid',
+                          child: Text('Paid'),
+                        ),
+                        PopupMenuItem(
+                          value: 'Overpaid',
+                          child: Text('Overpaid'),
+                        ),
+                        PopupMenuItem(
+                          value: 'Overdue',
+                          child: Text('Overdue'),
+                        ),
+                        PopupMenuItem(
+                          value: 'Forgiven',
+                          child: Text('Forgiven'),
+                        ),
+                        PopupMenuItem(
+                          value: 'Blacklist',
+                          child: Text('Blacklist'),
+                        ),
+                      ],
+                      child: Icon(Icons.more_vert, color: Colors.white),
                     ),
-                    child: Text(item == null ? 'Save' : 'Update'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -229,34 +273,28 @@ class _IOUPageState extends State<IOUPage> {
               child: ListView.builder(
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
+                  final item = _items[index];
+                  final amount = item['Amount']?.toDouble() ?? 0.0;
+                  final status = item['Status'] ?? 'Started';
+
                   return Card(
+                    elevation: 2.0,
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    elevation: 6,
                     child: ListTile(
-                      onTap: () => _openForm(item: _items[index]),
-                      title: Text(
-                        _items[index]['Name']!,
-                        style: TextStyle(
-                            color: Colors.black, fontWeight: FontWeight.bold),
+                      contentPadding: EdgeInsets.all(16.0),
+                      leading: Icon(
+                        Icons.attach_money,
+                        color: getStatusColor(status),
                       ),
+                      title: Text(item['Name'] ?? ''),
                       subtitle: Text(
-                        _items[index]['Description']!,
-                        style: TextStyle(
-                            color: const Color.fromARGB(255, 45, 44, 44)),
+                        'Amount: USD ${amount.toStringAsFixed(2)}\nStatus: $status',
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'USD ${_items[index]['Amount']!}',
-                            style: TextStyle(color: Colors.black, fontSize: 15),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.delete, color: Colors.black),
-                            onPressed: () => _deleteItem(_items[index]['id']),
-                          ),
-                        ],
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _deleteItem(item['id']),
                       ),
+                      onTap: () => _openForm(item: item),
                     ),
                   );
                 },
@@ -268,8 +306,29 @@ class _IOUPageState extends State<IOUPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
         backgroundColor: Colors.orange,
-        child: Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add),
       ),
     );
+  }
+
+  Color getStatusColor(String status) {
+    switch (status) {
+      case 'Started':
+        return Colors.green;
+      case 'Pending':
+        return Colors.orange;
+      case 'Paid':
+        return Colors.blue;
+      case 'Overpaid':
+        return Colors.yellow;
+      case 'Overdue':
+        return Colors.red;
+      case 'Forgiven':
+        return Color.fromARGB(255, 121, 119, 119);
+      case 'Blacklist':
+        return Colors.black;
+      default:
+        return Colors.grey;
+    }
   }
 }
