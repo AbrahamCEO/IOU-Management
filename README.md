@@ -4,7 +4,7 @@
 
 The **IOU App** helps you manage personal debts and IOUs. It includes features for tracking amounts, payments, and statuses. Users can add, update, and view their IOUs and UOMes, manage currency preferences, and monitor transactions. The frontend is built with Flutter, and SQLite is used for local database management.
 
-**Deployed Site:** *[Add your deployed site URL here]*
+**Deployed Site:**
 
 ## Getting Started
 
