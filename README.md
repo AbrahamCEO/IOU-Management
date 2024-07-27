@@ -44,16 +44,15 @@ The **IOU App** helps you manage personal debts and IOUs. It includes features f
 
 ## Features
 
-- **Dashboard:** Overview of IOUs and UOMEs with total amounts and recent transactions.
-- **UOMe Page:** Add, view, and update UOME items. Use the contact icon to pre-fill fields and manage item status.
-- **IOU Page:** Add, view, and update IOUs. Calculates total and remaining amounts.
+- **Dashboard:** Overview of IOUs and UOMEs total amount and net balance and visual representation (pie chart.
+- **UOMe Page:** Add, view, delete and update UOME items and manage item status.
+- **IOU Page:** Add, view, delete and update UOME items and manage item status.
 - **Currency Conversion:** Fetches up-to-date exchange rates from the Free Currency Conversion API.
 
 ## Usage
 
-- **Add/Update UOMe:** Use the form to create or update UOME items. Utilize the contact icon for field auto-fill and select status from the drop-down menu.
-- **Add/Update IOU:** Enter details for IOUs, with calculated total and remaining amounts displayed.
-- **View Transactions:** Recent transactions displayed with arrows indicating IOU or UOMe.
+- **Add/Update UOMe:** Use the form to create or update UOME items and select status from the drop-down menu.
+- **Add/Update IOU:** Use the form to create or update UOME items and select status from the drop-down menu.
 - **Currency Settings:** Adjust currency preferences and view totals accordingly.
 
 ## Screenshots
