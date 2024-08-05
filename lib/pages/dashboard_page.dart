@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iouapp/services/database_service.dart';
 import 'iou_page.dart';
 import 'uome_page.dart';
-LOOOOOOOOOOOL
+
 // Common styles
 final kPrimaryColor = Color.fromARGB(255, 255, 157, 0);
 final kSecondaryColor = Color.fromARGB(255, 0, 0, 0);
