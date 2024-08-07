@@ -3,7 +3,6 @@ import 'package:iouapp/services/database_service.dart';
 
 class IOUPage extends StatefulWidget {
   final Function updateData;
-npm install cypress --save-dev
 
   const IOUPage({required this.updateData, super.key});
 
